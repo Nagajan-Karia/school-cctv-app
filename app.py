@@ -8,13 +8,21 @@ import cv2
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_parents_portal'
 
-GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?gid=0&single=true&output=csv'
+# બ્રાઉઝર બંધ થતાં જ સેશન ટર્મિનેટ કરવા માટે
+app.config['SESSION_PERMANENT'] = False
+
+# તમારી સાચી Google Sheet CSV એક્સપોર્ટ લિંક
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv'
 
 def get_user_data(username, password=None):
     try:
-        # કેશ દૂર કરવા માટે ટાઈમસ્ટాంપ અને no-cache હેડર સાથે ડેટા ફેચ કરવો
-        cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}&t={int(time.time())}"
-        headers = {"Cache-Control": "no-cache"}
+        # સર્વર-સાઇડ કેશ તોડવા માટે ટાઇમસ્ટામપ અને સ્ટ્રિક્ટ હેડર્સ
+        cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}&t={int(time.time())}&force=true"
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
         response = requests.get(cache_buster_url, headers=headers)
         
         if response.status_code == 200:
@@ -23,7 +31,7 @@ def get_user_data(username, password=None):
             # કૉલમ્સના નામ ક્લીન કરવા
             df.columns = df.columns.str.strip()
             
-            # યુઝરનેમ અને પાસવર્ડને પ્રોપર સ્ટ્રિંગમાં ફેરવીને નંબર/પોઈન્ટ (જેવું કે 123.0) દૂર કરવા
+            # યુઝરનેમ અને પાસવર્ડને પ્રોપર સ્ટ્રિંગમાં ફેરવીને નંબર/પોઈન્ટ દૂર કરવા
             df['username'] = df['username'].astype(str).str.strip()
             df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
             
@@ -75,7 +83,7 @@ def login():
             session['user'] = user['username']
             return redirect(url_for('dashboard'))
         else:
-            error = 'ખોટો યુઝરનેમ અથવા પાસવर्ड!'[cite: 1]
+            error = 'ખોટો યુઝરનેમ અથવા પાસવર્ડ!'[cite: 1]
             
     return render_template('login.html', error=error)
 
