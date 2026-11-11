@@ -58,3 +58,7 @@ def login():
         user = get_user_data(username, password)
         if user:
             session
+
+git add .
+git commit -m "Trigger auto restart"
+git push origin main
