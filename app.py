@@ -29,7 +29,9 @@ def get_user_data(username, password=None):
         if response.status_code == 200:
             df = pd.read_csv(io.StringIO(response.text))
             
-            df.columns = df.columns.str.strip()
+            # મહત્ત્વનું: કૉલમ્સના નામમાંથી છૂપા BOM કેરેક્ટર અને સ્પેસ દૂર કરવા
+            df.columns = df.columns.str.replace('\ufeff', '').str.strip()
+            
             df['username'] = df['username'].astype(str).str.strip()
             df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
             
