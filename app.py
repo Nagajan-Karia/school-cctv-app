@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_parents_portal'
 
 # તમારી Published Google Sheet ની CSV Link
-GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv'
 
 def get_user_data(username, password=None):
     try:
