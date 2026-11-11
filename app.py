@@ -8,7 +8,7 @@ import cv2
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_parents_portal'
 
-GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv'
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv&gid=0'
 
 def get_user_data(username, password=None):
     try:
