@@ -5,11 +5,14 @@ import cv2
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_parents_portal'
 
-EXCEL_FILE = 'parents_data.xlsx'
+# તમારી Published Google Sheet ની CSV Link
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
 
 def get_user_data(username, password=None):
     try:
-        df = pd.read_excel(EXCEL_FILE)
+        # ઓનલાઈન ડેટા વાંચવા માટે read_csv નો ઉપયોગ
+        df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
+        
         if password:
             user_row = df[(df['username'].astype(str) == str(username)) & (df['password'].astype(str) == str(password))]
         else:
@@ -17,11 +20,9 @@ def get_user_data(username, password=None):
             
         if not user_row.empty:
             row = user_row.iloc[0].to_dict()
-            # કોમાથી અલગ પડેલા નામો અને કેમેરા URL ને લિસ્ટમાં કન્વર્ટ કરો
             students = [s.strip() for s in str(row['student_names']).split(',')]
             cameras = [c.strip() for c in str(row['camera_urls']).split(',')]
             
-            # બાળક અને કેમેરા ની જોડ (Pair) બનાવો
             children = []
             for i in range(len(students)):
                 cam = cameras[i] if i < len(cameras) else "0"
@@ -32,7 +33,7 @@ def get_user_data(username, password=None):
                 'children': children
             }
     except Exception as e:
-        print("Excel Read Error:", e)
+        print("Google Sheet Read Error:", e)
     return None
 
 @app.route('/')
@@ -45,8 +46,13 @@ def home():
 def login():
     error = None
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        # strip() થી આગળ-પાછળની સ્પેસ દૂર થશે
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if not username or not password:
+            error = 'યુઝરનેમ અથવા પાસવર્ડ ખાલી ન હોઈ શકે!'
+            return render_template('login.html', error=error)
         
         user = get_user_data(username, password)
         if user:
@@ -81,23 +87,4 @@ def dashboard():
         return redirect(url_for('login'))
     
     user_data = get_user_data(session['user'])
-    return render_template('dashboard.html', user=user_data['username'], children=user_data['children'])
-
-@app.route('/video_feed/<int:child_id>')
-def video_feed(child_id):
-    if 'user' not in session:
-        return "Unauthorized", 401
-    
-    user_data = get_user_data(session['user'])
-    if user_data and child_id < len(user_data['children']):
-        cam_url = user_data['children'][child_id]['url']
-        return Response(generate_frames(cam_url), mimetype='multipart/x-mixed-replace; boundary=frame')
-    return "Camera Not Found", 404
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    return render_template('dashboard.html', user
