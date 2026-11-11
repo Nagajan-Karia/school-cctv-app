@@ -8,11 +8,11 @@ import cv2
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_for_parents_portal'
 
-GOOGLE_SHEET_CSV_URL = ''https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv&v=2'
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv'
 
 def get_user_data(username, password=None):
     try:
-        # ટાઈમસ્ટాంપ અને no-cache હેડર સાથે ફ્રેશ ડેટા ફેચ કરવો
+        # કેશ દૂર કરવા માટે ટાઈમસ્ટాంપ અને no-cache હેડર સાથે ડેટા ફેચ કરવો
         cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}&t={int(time.time())}"
         headers = {"Cache-Control": "no-cache"}
         response = requests.get(cache_buster_url, headers=headers)
@@ -20,10 +20,20 @@ def get_user_data(username, password=None):
         if response.status_code == 200:
             df = pd.read_csv(io.StringIO(response.text))
             
-            if password:
-                user_row = df[(df['username'].astype(str).str.strip() == str(username).strip()) & (df['password'].astype(str).str.strip() == str(password).strip())]
+            # કૉલમ્સના નામ ક્લીન કરવા
+            df.columns = df.columns.str.strip()
+            
+            # યુઝરનેમ અને પાસવર્ડને પ્રોપર સ્ટ્રિંગમાં ફેરવીને નંબર/પોઈન્ટ (જેવું કે 123.0) દૂર કરવા
+            df['username'] = df['username'].astype(str).str.strip()
+            df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
+            
+            clean_user = str(username).strip()
+            
+            if password is not None:
+                clean_pass = str(password).strip().replace('.0', '')
+                user_row = df[(df['username'] == clean_user) & (df['password'] == clean_pass)]
             else:
-                user_row = df[df['username'].astype(str).str.strip() == str(username).strip()]
+                user_row = df[df['username'] == clean_user]
                 
             if not user_row.empty:
                 row = user_row.iloc[0].to_dict()
@@ -65,7 +75,7 @@ def login():
             session['user'] = user['username']
             return redirect(url_for('dashboard'))
         else:
-            error = 'Khoto username athva password!'
+            error = 'ખોટો યુઝરનેમ અથવા પાસવर्ड!'[cite: 1]
             
     return render_template('login.html', error=error)
 
@@ -93,6 +103,9 @@ def dashboard():
         return redirect(url_for('login'))
     
     user_data = get_user_data(session['user'])
+    if not user_data:
+        session.clear()
+        return redirect(url_for('login'))
     return render_template('dashboard.html', user=user_data['username'], children=user_data['children'])
 
 @app.route('/video_feed/<int:child_id>')
@@ -113,6 +126,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
-git add .
-git commit -m "Trigger auto restart"
-git push origin main
