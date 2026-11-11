@@ -11,8 +11,8 @@ app.secret_key = 'super_secret_key_for_parents_portal'
 # બ્રાઉઝર બંધ થતાં જ સેશન ટર્મિનેટ કરવા માટે
 app.config['SESSION_PERMANENT'] = False
 
-# તમારી સાચી પબ્લિશ કરેલી CSV લિંક
-GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
+# તમારી નવી અને એકદમ સાચી CSV એક્સપોર્ટ લિંક
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSnrTQIAI9ByNm-VJOzUBHhlg9NBIVoT4-s_Mq6xQrl2O0tT2XY7XzTf3m5hfjVYDV_0OjrT3ITecz7/pub?gid=0&single=true&output=csv'
 
 def get_user_data(username, password=None):
     try:
@@ -29,8 +29,8 @@ def get_user_data(username, password=None):
         if response.status_code == 200:
             df = pd.read_csv(io.StringIO(response.text))
             
-            # મહત્ત્વનું: કૉલમ્સના નામમાંથી છૂપા BOM કેરેક્ટર અને સ્પેસ દૂર કરવા
-            df.columns = df.columns.str.replace('\ufeff', '').str.strip()
+            # કૉલમ્સના નામમાંથી BOM અને સ્પેસ દૂર કરીને લોઅરકેસ કરી દેવા
+            df.columns = df.columns.str.replace('\ufeff', '').str.strip().str.lower()
             
             df['username'] = df['username'].astype(str).str.strip()
             df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
