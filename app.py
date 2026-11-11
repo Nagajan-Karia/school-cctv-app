@@ -11,12 +11,11 @@ app.secret_key = 'super_secret_key_for_parents_portal'
 # બ્રાઉઝર બંધ થતાં જ સેશન ટર્મિનેટ કરવા માટે
 app.config['SESSION_PERMANENT'] = False
 
-# તમારી સાચી Google Sheet CSV એક્સપોર્ટ લિંક
-GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TQPwH5gYpQ9u-KjRcnHUCCXZJy340NVkAkr-AH6DVAw/export?format=csv'
+# તમારી સાચી પબ્લિશ કરેલી CSV લિંક
+GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
 
 def get_user_data(username, password=None):
     try:
-        # સર્વર-સાઇડ કેશ તોડવા માટે ટાઇમસ્ટામપ અને સ્ટ્રિક્ટ હેડર્સ
         cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}&t={int(time.time())}&force=true"
         headers = {
             "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -28,10 +27,7 @@ def get_user_data(username, password=None):
         if response.status_code == 200:
             df = pd.read_csv(io.StringIO(response.text))
             
-            # કૉલમ્સના નામ ક્લીન કરવા
             df.columns = df.columns.str.strip()
-            
-            # યુઝરનેમ અને પાસવર્ડને પ્રોપર સ્ટ્રિંગમાં ફેરવીને નંબર/પોઈન્ટ દૂર કરવા
             df['username'] = df['username'].astype(str).str.strip()
             df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
             
