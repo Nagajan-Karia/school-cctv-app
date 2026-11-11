@@ -16,7 +16,9 @@ GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7L
 
 def get_user_data(username, password=None):
     try:
-        cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}&t={int(time.time())}&force=true"
+        separator = "&" if "?" in GOOGLE_SHEET_CSV_URL else "?"
+        cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}{separator}t={int(time.time())}"
+        
         headers = {
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
@@ -79,7 +81,7 @@ def login():
             session['user'] = user['username']
             return redirect(url_for('dashboard'))
         else:
-            error = 'ખોટો યુઝરનેમ અથવા પાસવર્ડ!'[cite: 1]
+            error = 'ખોટો યુઝરનેમ અથવા પાસવર્ડ!'
             
     return render_template('login.html', error=error)
 
