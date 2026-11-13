@@ -30,17 +30,19 @@ def get_user_data(username, password=None):
             clean_pass = str(password).strip() if password is not None else None
             
             for row in reader:
-                row = {k.replace('\ufeff', '').strip().lower(): v.strip() for k, v in row.items() if k}
+                cleaned_row = {}
+                for k, v in row.items():
+                    if k:
+                        new_key = k.replace('\ufeff', '').strip().lower()
+                        cleaned_row[new_key] = v.strip() if v else ''
                 
-                row_user = str(row.get('username', '')).strip()
-                row_pass = str(row.get('password', '')).strip().replace('.0', '')
-                
-                print(f"Checking -> Sheet User: '{row_user}' | Sheet Pass: '{row_pass}' vs Input User: '{clean_user}' | Input Pass: '{clean_pass}'")
+                row_user = str(cleaned_row.get('username', '')).strip()
+                row_pass = str(cleaned_row.get('password', '')).strip().replace('.0', '')
                 
                 if row_user == clean_user:
                     if clean_pass is None or row_pass == clean_pass:
-                        student_raw = row.get('student_names', 'Student')
-                        camera_raw = row.get('camera_urls', '0')
+                        student_raw = cleaned_row.get('student_names', 'Student')
+                        camera_raw = cleaned_row.get('camera_urls', '0')
                         
                         students = [item.strip() for item in student_raw.split(',') if item.strip()]
                         cameras = [item.strip() for item in camera_raw.split(',') if item.strip()]
