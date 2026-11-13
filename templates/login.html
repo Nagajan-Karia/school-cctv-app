@@ -2,13 +2,59 @@
 <html lang="gu">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>સ્કૂલ CCTV પોર્ટલ - લોગિન</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 98%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .error { color: red; font-size: 14px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f6f9; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .login-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15); 
+            width: 350px; /* કાર્ડની પહોળાઈ થોડી વધારી છે */
+            text-align: center; 
+        }
+        h2 {
+            font-size: 24px; /* હેડિંગ મોટું કર્યું છે */
+            color: #333;
+            margin-bottom: 20px;
+        }
+        input { 
+            width: 90%; 
+            padding: 12px; 
+            margin: 12px 0; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 16px; /* ઇનપુટ ટેક્સ્ટ મોટો કર્યો છે */
+        }
+        button { 
+            width: 96%; 
+            padding: 12px; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; /* બટનનું લખાણ મોટું કર્યું છે */
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .error { 
+            color: red; 
+            font-size: 15px; 
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -18,8 +64,8 @@
             <p class="error">{{ error }}</p>
         {% endif %}
         <form method="POST">
-            <input type="text" name="username" placeholder="યુઝરનેમ (દા.ત. parent1)" required><br>
-            <input type="password" name="password" placeholder="પાસવર્ડ (દા.ત. 123456)" required><br>
+            <input type="text" name="username" placeholder="યુઝરનેમ (દા.ત. P1)" required><br>
+            <input type="password" name="password" placeholder="પાસવર્ડ" required><br>
             <button type="submit">લોગિન કરો</button>
         </form>
     </div>
