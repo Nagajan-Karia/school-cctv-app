@@ -2,17 +2,16 @@ import time
 import csv
 import io
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'your_super_secret_key_here'  # Session management mate secret key
+app.secret_key = 'your_super_secret_key_here'
 
 # Google Sheet CSV Export Link
 GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
 
 def get_user_data(username, password=None):
     try:
-        # Cache buster add karva thi latest data turant malše
         separator = "&" if "?" in GOOGLE_SHEET_CSV_URL else "?"
         cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}{separator}t={int(time.time())}"
         
@@ -24,7 +23,6 @@ def get_user_data(username, password=None):
         response = requests.get(cache_buster_url, headers=headers, timeout=10)
         
         if response.status_code == 200:
-            # Pandas vagar sidhu CSV read karva mate io ane csv module no use
             f = io.StringIO(response.text)
             reader = csv.DictReader(f)
             
@@ -32,7 +30,6 @@ def get_user_data(username, password=None):
             clean_pass = str(password).strip() if password is not None else None
             
             for row in reader:
-                # Kolam na nam mathi extra spaces athva BOM (ufeff) remove karva
                 row = {k.replace('\ufeff', '').strip().lower(): v.strip() for k, v in row.items() if k}
                 
                 row_user = str(row.get('username', '')).strip()
@@ -64,7 +61,7 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/login', methods=['GET', 'POST5', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
