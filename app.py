@@ -22,8 +22,6 @@ def get_user_data(username, password=None):
         }
         response = requests.get(cache_buster_url, headers=headers, timeout=10)
         
-        print(f"CSV Fetch Status Code: {response.status_code}") # Debug
-        
         if response.status_code == 200:
             f = io.StringIO(response.text)
             reader = csv.DictReader(f)
@@ -37,13 +35,15 @@ def get_user_data(username, password=None):
                 row_user = str(row.get('username', '')).strip()
                 row_pass = str(row.get('password', '')).strip().replace('.0', '')
                 
-                # Railway logs ma check કરવા માટે print
                 print(f"Checking -> Sheet User: '{row_user}' | Sheet Pass: '{row_pass}' vs Input User: '{clean_user}' | Input Pass: '{clean_pass}'")
                 
                 if row_user == clean_user:
                     if clean_pass is None or row_pass == clean_pass:
-                        students = [s.strip() for s in row.get('student_names', 'Student').split(',') if s.strip()]
-                        cameras = [c.strip() for c in row.get('camera_urls', '0').split(',') if s.strip()]
+                        student_raw = row.get('student_names', 'Student')
+                        camera_raw = row.get('camera_urls', '0')
+                        
+                        students = [item.strip() for item in student_raw.split(',') if item.strip()]
+                        cameras = [item.strip() for item in camera_raw.split(',') if item.strip()]
                         
                         children = []
                         for i in range(len(students)):
