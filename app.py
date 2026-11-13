@@ -1,21 +1,18 @@
 import time
+import csv
 import io
 import requests
-from flask import Flask, render_template, Response, request, redirect, url_for, session
-import pandas as pd
-import cv2
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key_for_parents_portal'
+app.secret_key = 'your_super_secret_key_here'  # Session management mate secret key
 
-# બ્રાઉઝર બંધ થતાં જ સેશન ટર્મિનેટ કરવા માટે
-app.config['SESSION_PERMANENT'] = False
-
-# તમારી નવી અને એકદમ સાચી CSV એક્સપોર્ટ લિંક
+# Google Sheet CSV Export Link
 GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS728I7LC85EHEzmjI2CGuVKmqQunHBPDPyUpEeir4ohxGcUvSovxh8qH-AI0_lNqqCbKiXMG16POS5/pub?output=csv'
 
 def get_user_data(username, password=None):
     try:
+        # Cache buster add karva thi latest data turant malše
         separator = "&" if "?" in GOOGLE_SHEET_CSV_URL else "?"
         cache_buster_url = f"{GOOGLE_SHEET_CSV_URL}{separator}t={int(time.time())}"
         
@@ -24,113 +21,83 @@ def get_user_data(username, password=None):
             "Pragma": "no-cache",
             "Expires": "0"
         }
-        response = requests.get(cache_buster_url, headers=headers)
+        response = requests.get(cache_buster_url, headers=headers, timeout=10)
         
         if response.status_code == 200:
-            df = pd.read_csv(io.StringIO(response.text))
-            
-            # કૉલમ્સના નામમાંથી BOM અને સ્પેસ દૂર કરીને લોઅરકેસ કરી દેવા
-            df.columns = df.columns.str.replace('\ufeff', '').str.strip().str.lower()
-            
-            df['username'] = df['username'].astype(str).str.strip()
-            df['password'] = df['password'].astype(str).str.replace('.0', '', regex=False).str.strip()
+            # Pandas vagar sidhu CSV read karva mate io ane csv module no use
+            f = io.StringIO(response.text)
+            reader = csv.DictReader(f)
             
             clean_user = str(username).strip()
+            clean_pass = str(password).strip() if password is not None else None
             
-            if password is not None:
-                clean_pass = str(password).strip().replace('.0', '')
-                user_row = df[(df['username'] == clean_user) & (df['password'] == clean_pass)]
-            else:
-                user_row = df[df['username'] == clean_user]
+            for row in reader:
+                # Kolam na nam mathi extra spaces athva BOM (ufeff) remove karva
+                row = {k.replace('\ufeff', '').strip().lower(): v.strip() for k, v in row.items() if k}
                 
-            if not user_row.empty:
-                row = user_row.iloc[0].to_dict()
-                students = [s.strip() for s in str(row['student_names']).split(',')]
-                cameras = [c.strip() for c in str(row['camera_urls']).split(',')]
+                row_user = str(row.get('username', '')).strip()
+                row_pass = str(row.get('password', '')).strip().replace('.0', '')
                 
-                children = []
-                for i in range(len(students)):
-                    cam = cameras[i] if i < len(cameras) else "0"
-                    children.append({'name': students[i], 'cam_id': i, 'url': cam})
-                    
-                return {
-                    'username': row['username'],
-                    'children': children
-                }
+                if row_user == clean_user:
+                    if clean_pass is None or row_pass == clean_pass:
+                        students = [s.strip() for s in row.get('student_names', 'Student').split(',') if s.strip()]
+                        cameras = [c.strip() for c in row.get('camera_urls', '0').split(',') if s.strip()]
+                        
+                        children = []
+                        for i in range(len(students)):
+                            cam = cameras[i] if i < len(cameras) else "0"
+                            children.append({'name': students[i], 'cam_id': i, 'url': cam})
+                            
+                        return {
+                            'username': row_user,
+                            'children': children
+                        }
+        else:
+            print(f"Google Sheet HTTP Error: {response.status_code}")
     except Exception as e:
         print("Google Sheet Read Error:", e)
     return None
 
 @app.route('/')
-def home():
+def index():
     if 'user' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST5', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        username = request.form.get('username')
+        password = request.form.get('password')
         
-        if not username or not password:
-            error = 'Username athva password khali na hoi shake!'
-            return render_template('login.html', error=error)
-        
-        user = get_user_data(username, password)
-        if user:
-            session['user'] = user['username']
+        user_data = get_user_data(username, password)
+        if user_data:
+            session['user'] = user_data['username']
             return redirect(url_for('dashboard'))
         else:
             error = 'ખોટો યુઝરનેમ અથવા પાસવર્ડ!'
             
     return render_template('login.html', error=error)
 
-def generate_frames(camera_source):
-    if str(camera_source) == '0':
-        cam_id = 0
-    else:
-        cam_id = camera_source
-        
-    camera = cv2.VideoCapture(cam_id)
-    
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame_bytes = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
+        
+    username = session['user']
+    user_data = get_user_data(username)
     
-    user_data = get_user_data(session['user'])
     if not user_data:
-        session.clear()
+        session.pop('user', None)
         return redirect(url_for('login'))
-    return render_template('dashboard.html', user=user_data['username'], children=user_data['children'])
-
-@app.route('/video_feed/<int:child_id>')
-def video_feed(child_id):
-    if 'user' not in session:
-        return "Unauthorized", 401
-    
-    user_data = get_user_data(session['user'])
-    if user_data and child_id < len(user_data['children']):
-        cam_url = user_data['children'][child_id]['url']
-        return Response(generate_frames(cam_url), mimetype='multipart/x-mixed-replace; boundary=frame')
-    return "Camera Not Found", 404
+        
+    return render_template('dashboard.html', user_data=user_data)
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop('user', None)
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(host='0.0.0.0', port=5000, debug=True)
