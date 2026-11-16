@@ -34,7 +34,8 @@
                 <div class="student-name">બાળકનું નામ: {{ child.name }}</div>
                 <div class="camera-box">
                     {% if child.url and child.url != '0' %}
-                        <iframe src="{{ child.url }}" allowfullscreen></iframe>
+                        <!-- નવી સુરક્ષિત પ્રોક્ષી લિંક (અસલી URL છુપાયેલું રહેશે) -->
+                        <iframe src="{{ url_for('stream', cam_id=child.cam_id) }}" allowfullscreen></iframe>
                     {% else %}
                         <div class="no-camera">આ કેમેરા માટે હાલ લિંક ઉપલબ્ધ નથી.</div>
                     {% endif %}
