@@ -6,6 +6,7 @@ import requests
 from flask import Flask, render_template, request, redirect, url_for, session, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 
@@ -60,7 +61,8 @@ def get_user_data(username, password=None):
                 row_pass = str(cleaned_row.get('password', '')).strip()
                 
                 if row_user == clean_user:
-                    if clean_pass is None or row_pass == clean_pass:
+                    # Password Hashing verification (Plain text badle hash check thase)
+                    if clean_pass is None or check_password_hash(row_pass, clean_pass):
                         student_raw = cleaned_row.get('student_names', 'Student')
                         camera_raw = cleaned_row.get('camera_urls', '0')
                         
@@ -87,7 +89,7 @@ def index():
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")  # 1 મિનિટમાં ફક્ત 5 જ વાર લોગઈન ટ્રાય કરી શકાશે (Brute-force protection)
+@limiter.limit("5 per minute")  # Brute-force protection
 def login():
     error = None
     if request.method == 'POST':
